@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>গণিত MCQ পরীক্ষা — নবম-দশম শ্রেণি</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@500;600;700&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#16231c;
+    --bg-2:#1e2e25;
+    --bg-3:#243a2d;
+    --chalk:#f1eedf;
+    --chalk-dim:#aebcae;
+    --accent:#e3b655;
+    --accent-dim:#8a713a;
+    --blue:#7ca6c7;
+    --good:#8fbf8b;
+    --bad:#cf8a83;
+    --line:rgba(241,238,223,0.28);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 20%, rgba(241,238,223,0.035) 0, transparent 45%),
+      radial-gradient(circle at 85% 75%, rgba(241,238,223,0.03) 0, transparent 40%),
+      var(--bg);
+    color:var(--chalk);
+    font-family:'Hind Siliguri', sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:32px 16px 60px;
+    line-height:1.6;
+  }
+  .wrap{width:100%;max-width:620px;}
+  h1,h2,h3{font-family:'Noto Serif Bengali', serif; margin:0; font-weight:600;}
+  .top{text-align:center; margin-bottom:26px;}
+  .top h1{font-size:26px; letter-spacing:.2px;}
+  .top p{color:var(--chalk-dim); margin:6px 0 0; font-size:14px;}
+  .card{
+    background:var(--bg-2);
+    border:1.5px dashed var(--line);
+    border-radius:4px;
+    padding:26px 24px;
+    position:relative;
+  }
+  .card + .card{margin-top:16px;}
+  label{display:block; font-size:14px; color:var(--chalk-dim); margin:14px 0 6px;}
+  label:first-of-type{margin-top:0;}
+  input[type=text], select{
+    width:100%;
+    background:var(--bg-3);
+    border:1px solid var(--line);
+    border-radius:3px;
+    color:var(--chalk);
+    padding:11px 12px;
+    font-family:'Hind Siliguri', sans-serif;
+    font-size:16px;
+  }
+  input[type=text]:focus, select:focus{outline:2px solid var(--accent); outline-offset:1px;}
+  .row{display:flex; gap:12px;}
+  .row > div{flex:1;}
+  button{
+    font-family:'Hind Siliguri', sans-serif;
+    font-size:16px;
+    font-weight:600;
+    border-radius:3px;
+    border:none;
+    cursor:pointer;
+    padding:13px 20px;
+  }
+  button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .btn-primary{background:var(--accent); color:#22190a; width:100%; margin-top:20px;}
+  .btn-primary:disabled{background:var(--accent-dim); color:#cfc8ad; cursor:not-allowed;}
+  .btn-ghost{background:transparent; color:var(--chalk-dim); border:1px solid var(--line); width:100%; margin-top:10px;}
+  .hint{font-size:12.5px; color:var(--chalk-dim); margin-top:18px; border-top:1px dashed var(--line); padding-top:14px;}
+  .hint code{background:var(--bg-3); padding:1px 5px; border-radius:2px; font-size:12px;}
+
+  /* Quiz screen */
+  .quiz-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
+  .quiz-head .meta{font-size:13px; color:var(--chalk-dim);}
+  .timer{
+    font-family:'Noto Serif Bengali', serif;
+    font-size:20px; font-weight:700; color:var(--blue);
+    border:1.5px dashed var(--line); border-radius:50%;
+    width:46px; height:46px; display:flex; align-items:center; justify-content:center;
+  }
+  .timer.low{color:var(--bad); border-color:var(--bad);}
+  .progress-track{height:5px; background:var(--bg-3); border-radius:3px; overflow:hidden; margin-bottom:22px;}
+  .progress-fill{height:100%; background:var(--accent); transition:width .3s ease;}
+  .q-number{color:var(--accent); font-size:14px; font-weight:600; margin-bottom:6px;}
+  .q-text{font-size:19px; font-weight:600; margin-bottom:20px;}
+  .option{
+    display:flex; align-items:center; gap:12px;
+    background:var(--bg-3); border:1.5px solid var(--line); border-radius:4px;
+    padding:13px 14px; margin-bottom:10px; cursor:pointer; font-size:16px;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .option:hover{border-color:var(--accent);}
+  .option.selected{border-color:var(--accent); background:rgba(227,182,85,0.12);}
+  .option .tag{
+    width:26px; height:26px; border-radius:50%; border:1.5px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--chalk-dim); flex-shrink:0;
+  }
+  .option.selected .tag{border-color:var(--accent); color:var(--accent);}
+
+  /* Result screen */
+  .score-big{text-align:center; padding:10px 0 6px;}
+  .score-big .num{font-family:'Noto Serif Bengali', serif; font-size:52px; font-weight:700; color:var(--accent);}
+  .score-big .lbl{color:var(--chalk-dim); font-size:14px; margin-top:4px;}
+  .stat-row{display:flex; gap:10px; margin:18px 0;}
+  .stat{flex:1; text-align:center; background:var(--bg-3); border-radius:4px; padding:12px 8px;}
+  .stat .n{font-size:20px; font-weight:700;}
+  .stat.good .n{color:var(--good);}
+  .stat.bad .n{color:var(--bad);}
+  .stat .l{font-size:12px; color:var(--chalk-dim); margin-top:2px;}
+  .review-item{border-top:1px dashed var(--line); padding:14px 0; font-size:14.5px;}
+  .review-item:first-child{border-top:none;}
+  .review-item .rq{font-weight:600; margin-bottom:6px;}
+  .review-item .ra{color:var(--chalk-dim); font-size:13.5px;}
+  .review-item .ra.wrong{color:var(--bad);}
+  .review-item .ra.right{color:var(--good);}
+  .sync-note{font-size:12.5px; color:var(--chalk-dim); text-align:center; margin-top:14px;}
+  .sync-note.pending{color:var(--accent);}
+  .hidden{display:none !important;}
+  a{color:var(--blue);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <h1>গণিত MCQ পরীক্ষা</h1>
+    <p>নবম ও দশম শ্রেণি — অধ্যায়ভিত্তিক অনুশীলন</p>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <div id="screen-setup" class="card">
+    <label for="in-name">নাম</label>
+    <input type="text" id="in-name" placeholder="তোমার পুরো নাম লেখো">
+
+    <div class="row">
+      <div>
+        <label for="in-roll">রোল / শ্রেণি</label>
+        <input type="text" id="in-roll" placeholder="যেমন: ৯ম — ১২">
+      </div>
+      <div>
+        <label for="in-count">প্রশ্ন সংখ্যা</label>
+        <select id="in-count">
+          <option value="5">৫টি</option>
+          <option value="10" selected>১০টি</option>
+          <option value="15">১৫টি</option>
+        </select>
+      </div>
+    </div>
+
+    <label for="in-chapter">অধ্যায় বাছাই করো</label>
+    <select id="in-chapter"></select>
+
+    <button class="btn-primary" id="btn-start">পরীক্ষা শুরু করো</button>
+    <div class="hint" id="setup-hint">প্রশ্ন লোড হচ্ছে…</div>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div id="screen-quiz" class="card hidden">
+    <div class="quiz-head">
+      <div class="meta" id="quiz-meta">প্রশ্ন ১ / ১০</div>
+      <div class="timer" id="quiz-timer">৪০</div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="q-number" id="q-number">প্রশ্ন ১</div>
+    <div class="q-text" id="q-text"></div>
+    <div id="q-options"></div>
+    <button class="btn-primary" id="btn-next" disabled>পরের প্রশ্ন</button>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div id="screen-result" class="card hidden">
+    <div class="score-big">
+      <div class="num" id="res-score">০/০</div>
+      <div class="lbl">মোট স্কোর</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat good"><div class="n" id="res-correct">০</div><div class="l">সঠিক</div></div>
+      <div class="stat bad"><div class="n" id="res-wrong">০</div><div class="l">ভুল</div></div>
+      <div class="stat"><div class="n" id="res-time">০:০০</div><div class="l">সময়</div></div>
+    </div>
+    <div id="res-review"></div>
+    <button class="btn-ghost" id="btn-restart">আবার পরীক্ষা দাও</button>
+    <div class="sync-note" id="sync-note"></div>
+  </div>
+
+  <div class="hint" style="margin-top:18px; text-align:center;" id="pending-line"></div>
+</div>
+
+<script>
+/* ========================================================================
+   কনফিগারেশন
+   Google Apps Script Web App URL এখানে বসাও (Code.gs ডিপ্লয় করার পর পাবে)।
+   ফাঁকা রাখলে অ্যাপটি নমুনা প্রশ্ন দিয়ে ও শুধু লোকাল স্টোরেজে চলবে।
+   ======================================================================== */
+const GOOGLE_SCRIPT_URL = ""; // যেমন: "https://script.google.com/macros/s/AKfycb.../exec"
+const SECONDS_PER_QUESTION = 40;
+
+/* নমুনা প্রশ্নব্যাংক (Sheet কনফিগার না করা পর্যন্ত এটি ব্যবহৃত হবে) */
+const SAMPLE_QUESTIONS = {
+  "বীজগণিত": [
+    {q:"(a + b)² এর বিস্তৃতি কোনটি?", options:["a² + b²","a² + 2ab + b²","a² − 2ab + b²","a² − b²"], correct:1},
+    {q:"x² − 9 = 0 হলে x এর মান কত?", options:["শুধু ৩","শুধু −৩","৩ অথবা −৩","০"], correct:2},
+    {q:"2x + 5 = 15 হলে x = ?", options:["৫","৪","৬","১০"], correct:0},
+    {q:"(a − b)(a + b) = ?", options:["a² + b²","a² − b²","2a²","2b²"], correct:1},
+    {q:"3x² যদি x = 2 হয়, তার মান কত?", options:["৬","৯","১২","১৮"], correct:2},
+  ],
+  "জ্যামিতি": [
+    {q:"একটি ত্রিভুজের তিন কোণের সমষ্টি কত ডিগ্রি?", options:["৯০°","১৮০°","৩৬০°","২৭০°"], correct:1},
+    {q:"সমকোণী ত্রিভুজে অতিভুজ কোন কোণের বিপরীতে থাকে?", options:["সূক্ষ্মকোণ","সমকোণ","স্থূলকোণ","কোনোটিই নয়"], correct:1},
+    {q:"বৃত্তের ব্যাসার্ধ ৭ সেমি হলে ব্যাস কত?", options:["৭ সেমি","১৪ সেমি","২১ সেমি","৩৫ সেমি"], correct:1},
+    {q:"একটি বর্গের প্রতিটি কোণ কত ডিগ্রি?", options:["৬০°","৯০°","১২০°","১৮০°"], correct:1},
+    {q:"পিথাগোরাসের সূত্র অনুযায়ী, লম্ব = ৩, ভূমি = ৪ হলে অতিভুজ কত?", options:["৫","৬","৭","৮"], correct:0},
+  ],
+  "পাটিগণিত": [
+    {q:"১৫% এর সমান ভগ্নাংশ কোনটি?", options:["৩/২০","৩/১০","১/৫","৩/৫০"], correct:0},
+    {q:"২৪ ও ৩৬ এর গ.সা.গু কত?", options:["৬","৮","১২","১৮"], correct:2},
+    {q:"একটি জিনিসের ক্রয়মূল্য ৮০ টাকা, বিক্রয়মূল্য ১০০ টাকা হলে লাভ কত %?", options:["২০%","২৫%","১৫%","৩০%"], correct:1},
+    {q:"০.৭৫ কে ভগ্নাংশে প্রকাশ করলে কত হয়?", options:["৩/৪","৭/৫","৫/৪","৭/১০"], correct:0},
+    {q:"৫ ও ৭ এর ল.সা.গু কত?", options:["১২","২৫","৩৫","৪২"], correct:2},
+  ],
+};
+
+/* ---------- স্টেট ---------- */
+let bank = {};              // সক্রিয় প্রশ্নব্যাংক (অধ্যায় → প্রশ্ন তালিকা)
+let session = null;         // চলমান পরীক্ষার স্টেট
+let timerHandle = null;
+
+const $ = (id) => document.getElementById(id);
+
+/* ---------- প্রশ্ন লোড (Sheet → cache → sample) ---------- */
+async function loadQuestions(){
+  const hint = $("setup-hint");
+  if (GOOGLE_SCRIPT_URL) {
+    try {
+      const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=questions`);
+      const data = await res.json();
+      if (data && data.chapters && Object.keys(data.chapters).length) {
+        bank = data.chapters;
+        localStorage.setItem("quiz_questions_cache", JSON.stringify(bank));
+        hint.textContent = "প্রশ্ন Google Sheet থেকে লোড হয়েছে।";
+        populateChapters();
+        return;
+      }
+    } catch (e) {
+      // নেট নেই বা শিট রেসপন্স করেনি — cache/sample এ চলে যাবে
+    }
+    const cached = localStorage.getItem("quiz_questions_cache");
+    if (cached) {
+      bank = JSON.parse(cached);
+      hint.textContent = "অফলাইন — আগের সেভ করা প্রশ্ন ব্যবহার হচ্ছে।";
+      populateChapters();
+      return;
+    }
+  }
+  bank = SAMPLE_QUESTIONS;
+  hint.textContent = GOOGLE_SCRIPT_URL
+    ? "Sheet থেকে প্রশ্ন পাওয়া যায়নি — নমুনা প্রশ্ন দেখানো হচ্ছে।"
+    : "নমুনা প্রশ্ন দেখানো হচ্ছে। নিজের Google Sheet যুক্ত করতে নিচের নোট দেখো।";
+  populateChapters();
+}
+
+function populateChapters(){
+  const sel = $("in-chapter");
+  sel.innerHTML = "";
+  Object.keys(bank).forEach(ch => {
+    const opt = document.createElement("option");
+    opt.value = ch; opt.textContent = `${ch} (${bank[ch].length}টি প্রশ্ন)`;
+    sel.appendChild(opt);
+  });
+}
+
+/* ---------- পরীক্ষা শুরু ---------- */
+function shuffle(arr){ return [...arr].sort(() => Math.random() - 0.5); }
+
+function startQuiz(){
+  const name = $("in-name").value.trim();
+  const roll = $("in-roll").value.trim();
+  if (!name) { $("in-name").focus(); return; }
+
+  const chapter = $("in-chapter").value;
+  const count = parseInt($("in-count").value, 10);
+  const pool = shuffle(bank[chapter] || []);
+  const questions = pool.slice(0, Math.min(count, pool.length));
+
+  session = {
+    name, roll, chapter, questions,
+    index: 0, answers: [], startedAt: Date.now(),
+    selected: null,
+  };
+
+  $("screen-setup").classList.add("hidden");
+  $("screen-result").classList.add("hidden");
+  $("screen-quiz").classList.remove("hidden");
+  renderQuestion();
+}
+
+/* ---------- প্রশ্ন রেন্ডার ---------- */
+function renderQuestion(){
+  clearInterval(timerHandle);
+  const { questions, index } = session;
+  const q = questions[index];
+  session.selected = null;
+
+  $("quiz-meta").textContent = `প্রশ্ন ${index + 1} / ${questions.length}`;
+  $("progress-fill").style.width = `${(index / questions.length) * 100}%`;
+  $("q-number").textContent = `প্রশ্ন ${index + 1}`;
+  $("q-text").textContent = q.q;
+
+  const optWrap = $("q-options");
+  optWrap.innerHTML = "";
+  const letters = ["ক","খ","গ","ঘ"];
+  q.options.forEach((opt, i) => {
+    const div = document.createElement("div");
+    div.className = "option";
+    div.innerHTML = `<span class="tag">${letters[i]}</span><span>${opt}</span>`;
+    div.onclick = () => selectOption(i, div);
+    optWrap.appendChild(div);
+  });
+
+  $("btn-next").disabled = true;
+  $("btn-next").textContent = index === questions.length - 1 ? "ফলাফল দেখো" : "পরের প্রশ্ন";
+
+  let secondsLeft = SECONDS_PER_QUESTION;
+  const timerEl = $("quiz-timer");
+  timerEl.textContent = toBnNum(secondsLeft);
+  timerEl.classList.remove("low");
+  timerHandle = setInterval(() => {
+    secondsLeft--;
+    timerEl.textContent = toBnNum(Math.max(secondsLeft, 0));
+    if (secondsLeft <= 10) timerEl.classList.add("low");
+    if (secondsLeft <= 0) {
+      clearInterval(timerHandle);
+      if (session.selected === null) recordAnswer(null);
+      goNext();
+    }
+  }, 1000);
+}
+
+function selectOption(i, el){
+  document.querySelectorAll(".option").forEach(o => o.classList.remove("selected"));
+  el.classList.add("selected");
+  session.selected = i;
+  $("btn-next").disabled = false;
+}
+
+function recordAnswer(i){
+  const q = session.questions[session.index];
+  session.answers.push({ q: q.q, options: q.options, chosen: i, correct: q.correct });
+}
+
+function goNext(){
+  if (session.selected !== null && session.answers.length === session.index) {
+    recordAnswer(session.selected);
+  }
+  session.index++;
+  if (session.index < session.questions.length) {
+    renderQuestion();
+  } else {
+    finishQuiz();
+  }
+}
+
+$("btn-next").addEventListener("click", () => {
+  clearInterval(timerHandle);
+  goNext();
+});
+
+/* ---------- ফলাফল ---------- */
+function toBnNum(n){
+  const map = ["০","১","২","৩","৪","৫","৬","৭","৮","৯"];
+  return String(n).split("").map(d => (map[d] !== undefined ? map[d] : d)).join("");
+}
+
+function finishQuiz(){
+  const total = session.answers.length;
+  const correct = session.answers.filter(a => a.chosen === a.correct).length;
+  const wrong = total - correct;
+  const elapsedSec = Math.round((Date.now() - session.startedAt) / 1000);
+  const mm = Math.floor(elapsedSec / 60), ss = elapsedSec % 60;
+
+  $("screen-quiz").classList.add("hidden");
+  $("screen-result").classList.remove("hidden");
+  $("res-score").textContent = `${toBnNum(correct)}/${toBnNum(total)}`;
+  $("res-correct").textContent = toBnNum(correct);
+  $("res-wrong").textContent = toBnNum(wrong);
+  $("res-time").textContent = `${toBnNum(mm)}:${String(ss).padStart(2,"0").split("").map(d=>toBnNum(d)).join("")}`;
+
+  const letters = ["ক","খ","গ","ঘ"];
+  const reviewWrap = $("res-review");
+  reviewWrap.innerHTML = "";
+  session.answers.forEach((a, idx) => {
+    const isRight = a.chosen === a.correct;
+    const chosenText = a.chosen === null ? "উত্তর দেওয়া হয়নি" : `${letters[a.chosen]}. ${a.options[a.chosen]}`;
+    const div = document.createElement("div");
+    div.className = "review-item";
+    div.innerHTML = `
+      <div class="rq">${idx + 1}. ${a.q}</div>
+      <div class="ra ${isRight ? "right" : "wrong"}">তোমার উত্তর: ${chosenText}</div>
+      ${!isRight ? `<div class="ra right">সঠিক উত্তর: ${letters[a.correct]}. ${a.options[a.correct]}</div>` : ""}
+    `;
+    reviewWrap.appendChild(div);
+  });
+
+  submitResult({
+    name: session.name, roll: session.roll, chapter: session.chapter,
+    score: correct, total, timeSec: elapsedSec,
+    timestamp: new Date().toISOString(),
+  });
+
+  updatePendingLine();
+}
+
+/* ---------- ফলাফল পাঠানো (Sheet sync + অফলাইন কিউ) ---------- */
+async function submitResult(result){
+  const note = $("sync-note");
+  if (!GOOGLE_SCRIPT_URL) {
+    note.textContent = "ফলাফল এই ডিভাইসে সেভ হয়েছে (Sheet যুক্ত করা নেই)।";
+    saveLocalResult(result);
+    return;
+  }
+  try {
+    await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "result", ...result }),
+    });
+    note.textContent = "ফলাফল Google Sheet-এ পাঠানো হয়েছে।";
+    saveLocalResult(result, true);
+  } catch (e) {
+    note.textContent = "ইন্টারনেট নেই — ফলাফল অফলাইন কিউতে রাখা হলো, পরে সিঙ্ক করো।";
+    note.classList.add("pending");
+    saveLocalResult(result, false);
+  }
+}
+
+function saveLocalResult(result, synced){
+  const key = "quiz_results_log";
+  const log = JSON.parse(localStorage.getItem(key) || "[]");
+  log.push({ ...result, synced: !!synced });
+  localStorage.setItem(key, JSON.stringify(log));
+}
+
+function getPendingResults(){
+  const log = JSON.parse(localStorage.getItem("quiz_results_log") || "[]");
+  return log.filter(r => !r.synced);
+}
+
+async function syncPending(){
+  if (!GOOGLE_SCRIPT_URL) return;
+  const log = JSON.parse(localStorage.getItem("quiz_results_log") || "[]");
+  let changed = false;
+  for (const r of log) {
+    if (r.synced) continue;
+    try {
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "result", ...r }),
+      });
+      r.synced = true;
+      changed = true;
+    } catch (e) { /* এখনও অফলাইন */ }
+  }
+  if (changed) localStorage.setItem("quiz_results_log", JSON.stringify(log));
+  updatePendingLine();
+}
+
+function updatePendingLine(){
+  const pending = getPendingResults().length;
+  const line = $("pending-line");
+  if (!GOOGLE_SCRIPT_URL) { line.textContent = ""; return; }
+  if (pending > 0) {
+    line.innerHTML = `${toBnNum(pending)}টি ফলাফল এখনও সিঙ্ক হয়নি। <a href="#" id="sync-link">এখনই সিঙ্ক করো</a>`;
+    $("sync-link").onclick = (e) => { e.preventDefault(); syncPending(); };
+  } else {
+    line.textContent = "";
+  }
+}
+
+/* ---------- রিস্টার্ট ---------- */
+$("btn-restart").addEventListener("click", () => {
+  $("screen-result").classList.add("hidden");
+  $("screen-setup").classList.remove("hidden");
+  $("in-name").value = session ? session.name : "";
+});
+
+$("btn-start").addEventListener("click", startQuiz);
+
+/* ---------- ইনিট ---------- */
+loadQuestions();
+updatePendingLine();
+window.addEventListener("online", syncPending);
+</script>
+</body>
+</html>
