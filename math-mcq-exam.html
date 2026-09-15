@@ -35,8 +35,40 @@
     justify-content:center;
     padding:32px 16px 60px;
     line-height:1.6;
+    position:relative;
+    overflow-x:hidden;
   }
-  .wrap{width:100%;max-width:620px;}
+
+  /* ভাসমান গণিত চিহ্ন — পটভূমি অ্যানিমেশন */
+  .math-bg{
+    position:fixed; inset:0;
+    overflow:hidden;
+    z-index:0;
+    pointer-events:none;
+  }
+  .math-symbol{
+    position:absolute;
+    bottom:-15%;
+    font-family:'Noto Serif Bengali', serif;
+    color:var(--chalk);
+    opacity:0;
+    line-height:1;
+    animation-name:drift;
+    animation-timing-function:linear;
+    animation-iteration-count:infinite;
+    will-change:transform, opacity;
+  }
+  @keyframes drift{
+    0%{ transform:translateY(0) rotate(0deg); opacity:0; }
+    10%{ opacity:var(--sym-op, 0.12); }
+    90%{ opacity:var(--sym-op, 0.12); }
+    100%{ transform:translateY(-125vh) rotate(var(--sym-rot, 15deg)); opacity:0; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .math-symbol{ animation:none; opacity:var(--sym-op, 0.1); }
+  }
+
+  .wrap{width:100%;max-width:620px; position:relative; z-index:1;}
   h1,h2,h3{font-family:'Noto Serif Bengali', serif; margin:0; font-weight:600;}
   .top{text-align:center; margin-bottom:26px;}
   .top h1{font-size:26px; letter-spacing:.2px;}
@@ -79,6 +111,15 @@
   .btn-ghost{background:transparent; color:var(--chalk-dim); border:1px solid var(--line); width:100%; margin-top:10px;}
   .hint{font-size:12.5px; color:var(--chalk-dim); margin-top:18px; border-top:1px dashed var(--line); padding-top:14px;}
   .hint code{background:var(--bg-3); padding:1px 5px; border-radius:2px; font-size:12px;}
+  #lock-box{margin-top:14px; padding:12px 14px; background:rgba(227,182,85,0.08); border:1px dashed var(--accent-dim); border-radius:4px;}
+  #lock-box label{margin-top:0; color:var(--accent);}
+  .lock-msg{font-size:12.5px; margin-top:6px; min-height:16px;}
+  .lock-msg.error{color:var(--bad);}
+  .lock-msg.ok{color:var(--good);}
+  .pay-link{display:inline-block; font-size:13px; margin-top:8px; color:var(--blue); text-decoration:none; border-bottom:1px dashed var(--blue);}
+  #pay-box{margin-top:14px; padding-top:14px; border-top:1px dashed var(--line);}
+  .pay-info{font-size:13.5px; color:var(--chalk-dim); margin-bottom:12px; line-height:1.7;}
+  .pay-info b{color:var(--chalk); font-weight:700;}
 
   /* Quiz screen */
   .quiz-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
@@ -131,6 +172,7 @@
 </style>
 </head>
 <body>
+<div class="math-bg" id="math-bg" aria-hidden="true"></div>
 <div class="wrap">
 
   <div class="top">
@@ -160,6 +202,29 @@
 
     <label for="in-chapter">অধ্যায় বাছাই করো</label>
     <select id="in-chapter"></select>
+
+    <div id="lock-box" class="hidden">
+      <label for="in-code">🔒 এই অধ্যায়টি পেইড — আনলক কোড দাও</label>
+      <input type="text" id="in-code" placeholder="কোড লেখো">
+      <div class="lock-msg" id="lock-msg"></div>
+      <a href="#" id="toggle-pay-link" class="pay-link">কোড নেই? টাকা পাঠিয়ে চাও</a>
+
+      <div id="pay-box" class="hidden">
+        <div class="pay-info" id="pay-info"></div>
+        <div class="row">
+          <div>
+            <label for="in-pay-phone">তোমার ফোন নাম্বার</label>
+            <input type="text" id="in-pay-phone" placeholder="যে নাম্বার থেকে পাঠিয়েছো">
+          </div>
+          <div>
+            <label for="in-pay-trx">Transaction ID</label>
+            <input type="text" id="in-pay-trx" placeholder="TrxID">
+          </div>
+        </div>
+        <button class="btn-ghost" id="btn-submit-payment" style="color:var(--accent); border-color:var(--accent-dim);">পেমেন্ট জমা দাও</button>
+        <div class="lock-msg" id="pay-msg"></div>
+      </div>
+    </div>
 
     <button class="btn-primary" id="btn-start">পরীক্ষা শুরু করো</button>
     <div class="hint" id="setup-hint">প্রশ্ন লোড হচ্ছে…</div>
@@ -205,6 +270,8 @@
    ======================================================================== */
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxlCaFxHkpNMranN4EvKsVCEWczt5QqeaE7wP_d8DNuHqy3GxQjNfO3d_LvK9OGtpZO/exec"; // যেমন: "https://script.google.com/macros/s/AKfycb.../exec"
 const SECONDS_PER_QUESTION = 40;
+const PAYMENT_BKASH = ""; // যেমন: "0181402842 (Send Money)"
+const PAYMENT_NAGAD = ""; // যেমন: "0181402842 (Send Money)"
 
 /* নমুনা প্রশ্নব্যাংক (Sheet কনফিগার না করা পর্যন্ত এটি ব্যবহৃত হবে) */
 const SAMPLE_QUESTIONS = {
@@ -233,10 +300,21 @@ const SAMPLE_QUESTIONS = {
 
 /* ---------- স্টেট ---------- */
 let bank = {};              // সক্রিয় প্রশ্নব্যাংক (অধ্যায় → প্রশ্ন তালিকা)
+let paidCodes = {};         // অধ্যায় → {code, price} (যে অধ্যায়ে এন্ট্রি নেই সেটা ফ্রি)
 let session = null;         // চলমান পরীক্ষার স্টেট
 let timerHandle = null;
 
 const $ = (id) => document.getElementById(id);
+
+/* ---------- ডিভাইসে আগে থেকে আনলক করা অধ্যায় ---------- */
+function getUnlockedSet(){
+  return new Set(JSON.parse(localStorage.getItem("quiz_unlocked_chapters") || "[]"));
+}
+function markUnlocked(chapter){
+  const set = getUnlockedSet();
+  set.add(chapter);
+  localStorage.setItem("quiz_unlocked_chapters", JSON.stringify([...set]));
+}
 
 /* ---------- প্রশ্ন লোড (Sheet → cache → sample) ---------- */
 async function loadQuestions(){
@@ -247,7 +325,9 @@ async function loadQuestions(){
       const data = await res.json();
       if (data && data.chapters && Object.keys(data.chapters).length) {
         bank = data.chapters;
+        paidCodes = data.paidCodes || {};
         localStorage.setItem("quiz_questions_cache", JSON.stringify(bank));
+        localStorage.setItem("quiz_paid_codes_cache", JSON.stringify(paidCodes));
         hint.textContent = "প্রশ্ন Google Sheet থেকে লোড হয়েছে।";
         populateChapters();
         return;
@@ -258,12 +338,14 @@ async function loadQuestions(){
     const cached = localStorage.getItem("quiz_questions_cache");
     if (cached) {
       bank = JSON.parse(cached);
+      paidCodes = JSON.parse(localStorage.getItem("quiz_paid_codes_cache") || "{}");
       hint.textContent = "অফলাইন — আগের সেভ করা প্রশ্ন ব্যবহার হচ্ছে।";
       populateChapters();
       return;
     }
   }
   bank = SAMPLE_QUESTIONS;
+  paidCodes = {};
   hint.textContent = GOOGLE_SCRIPT_URL
     ? "Sheet থেকে প্রশ্ন পাওয়া যায়নি — নমুনা প্রশ্ন দেখানো হচ্ছে।"
     : "নমুনা প্রশ্ন দেখানো হচ্ছে। নিজের Google Sheet যুক্ত করতে নিচের নোট দেখো।";
@@ -275,10 +357,67 @@ function populateChapters(){
   sel.innerHTML = "";
   Object.keys(bank).forEach(ch => {
     const opt = document.createElement("option");
-    opt.value = ch; opt.textContent = `${ch} (${bank[ch].length}টি প্রশ্ন)`;
+    const locked = paidCodes[ch] && !getUnlockedSet().has(ch);
+    opt.value = ch;
+    opt.textContent = `${locked ? "🔒 " : ""}${ch} (${bank[ch].length}টি প্রশ্ন)`;
     sel.appendChild(opt);
   });
+  toggleLockBox();
 }
+
+function toggleLockBox(){
+  const ch = $("in-chapter").value;
+  const box = $("lock-box");
+  const needsCode = paidCodes[ch] && !getUnlockedSet().has(ch);
+  box.classList.toggle("hidden", !needsCode);
+  $("lock-msg").textContent = "";
+  $("lock-msg").className = "lock-msg";
+  $("pay-box").classList.add("hidden");
+  $("pay-msg").textContent = "";
+  if (needsCode) {
+    $("in-code").value = "";
+    const price = paidCodes[ch].price;
+    const lines = [];
+    if (price) lines.push(`মূল্য: <b>${price} টাকা</b>`);
+    if (PAYMENT_BKASH) lines.push(`bKash (Send Money): <b>${PAYMENT_BKASH}</b>`);
+    if (PAYMENT_NAGAD) lines.push(`Nagad (Send Money): <b>${PAYMENT_NAGAD}</b>`);
+    lines.push("টাকা পাঠিয়ে নিচে ফোন নাম্বার ও Transaction ID দিয়ে জমা দাও — যাচাই হলে তোমাকে কোড পাঠানো হবে।");
+    $("pay-info").innerHTML = lines.join("<br>");
+  }
+}
+$("in-chapter").addEventListener("change", toggleLockBox);
+
+$("toggle-pay-link").addEventListener("click", (e) => {
+  e.preventDefault();
+  $("pay-box").classList.toggle("hidden");
+});
+
+$("btn-submit-payment").addEventListener("click", async () => {
+  const ch = $("in-chapter").value;
+  const name = $("in-name").value.trim();
+  const phone = $("in-pay-phone").value.trim();
+  const trx = $("in-pay-trx").value.trim();
+  const msg = $("pay-msg");
+
+  if (!name) { $("in-name").focus(); msg.textContent = "আগে নাম লেখো।"; msg.className = "lock-msg error"; return; }
+  if (!phone || !trx) { msg.textContent = "ফোন নাম্বার ও Transaction ID দুটোই দাও।"; msg.className = "lock-msg error"; return; }
+  if (!GOOGLE_SCRIPT_URL) { msg.textContent = "Sheet এখনও যুক্ত করা হয়নি, তাই পেমেন্ট জমা দেওয়া যাচ্ছে না।"; msg.className = "lock-msg error"; return; }
+
+  msg.textContent = "জমা দেওয়া হচ্ছে…"; msg.className = "lock-msg";
+  try {
+    await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        action: "paymentRequest", name, phone, chapter: ch, trxId: trx,
+        timestamp: new Date().toISOString(),
+      }),
+    });
+    msg.textContent = "জমা হয়েছে। যাচাই করে তোমাকে কোড পাঠানো হবে।"; msg.className = "lock-msg ok";
+  } catch (e) {
+    msg.textContent = "পাঠানো যায়নি — ইন্টারনেট চেক করে আবার চেষ্টা করো।"; msg.className = "lock-msg error";
+  }
+});
 
 /* ---------- পরীক্ষা শুরু ---------- */
 function shuffle(arr){ return [...arr].sort(() => Math.random() - 0.5); }
@@ -289,6 +428,22 @@ function startQuiz(){
   if (!name) { $("in-name").focus(); return; }
 
   const chapter = $("in-chapter").value;
+  const needsCode = paidCodes[chapter] && !getUnlockedSet().has(chapter);
+  if (needsCode) {
+    const entered = $("in-code").value.trim();
+    const msg = $("lock-msg");
+    if (!entered) {
+      msg.textContent = "আনলক কোডটি লেখো।"; msg.className = "lock-msg error";
+      $("in-code").focus(); return;
+    }
+    if (entered.toLowerCase() !== String(paidCodes[chapter].code).trim().toLowerCase()) {
+      msg.textContent = "কোডটি সঠিক নয়, আবার চেষ্টা করো।"; msg.className = "lock-msg error";
+      $("in-code").focus(); return;
+    }
+    markUnlocked(chapter);
+    msg.textContent = "কোড সঠিক — অধ্যায় আনলক হয়েছে।"; msg.className = "lock-msg ok";
+  }
+
   const count = parseInt($("in-count").value, 10);
   const pool = shuffle(bank[chapter] || []);
   const questions = pool.slice(0, Math.min(count, pool.length));
@@ -497,10 +652,36 @@ $("btn-restart").addEventListener("click", () => {
 
 $("btn-start").addEventListener("click", startQuiz);
 
+/* ---------- ভাসমান গণিত চিহ্ন তৈরি ---------- */
+function spawnMathBackground(){
+  const symbols = ["π","∑","√","∞","÷","×","+","−","=","∫","θ","∆","°","∠","½","¾","x²","∴"];
+  const wrap = $("math-bg");
+  const count = window.innerWidth < 480 ? 12 : 20;
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement("span");
+    el.className = "math-symbol";
+    el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    const size = 16 + Math.random() * 34;           // ১৬–৫০ পিক্সেল
+    const duration = 26 + Math.random() * 30;        // ২৬–৫৬ সেকেন্ড
+    const delay = -Math.random() * duration;         // এলোমেলো শুরু
+    const opacity = 0.05 + Math.random() * 0.11;      // খুব হালকা, লেখা চাপা না পড়ে
+    const rot = (Math.random() * 60 - 30).toFixed(0);
+    el.style.left = `${Math.random() * 100}%`;
+    el.style.fontSize = `${size}px`;
+    el.style.animationDuration = `${duration}s`;
+    el.style.animationDelay = `${delay}s`;
+    el.style.setProperty("--sym-op", opacity);
+    el.style.setProperty("--sym-rot", `${rot}deg`);
+    wrap.appendChild(el);
+  }
+}
+
 /* ---------- ইনিট ---------- */
 loadQuestions();
 updatePendingLine();
+spawnMathBackground();
 window.addEventListener("online", syncPending);
 </script>
 </body>
 </html>
+
